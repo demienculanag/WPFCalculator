@@ -1,0 +1,232 @@
+﻿@inherits BaseClasses.CalculatorBase
+@using Microsoft.AspNetCore.Components.Forms
+@using Models;
+@using Extensions;
+@using WPFCalculator.Helpers;
+
+
+
+<div class="wrapper">
+    <nav>
+        <ul>
+            <li>
+                <a href="#">File</a>
+
+                <ul>
+                    <li><a @onclick="t => ClearAll()">Clear</a></li>
+                    <li><a @onclick="t => Environment.Exit(0)">Exit</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#">View</a>
+                <ul>
+                    <li><a @onclick="ViewCalculatorScreen">Calculator</a></li>
+                    <li><a @onclick="ViewHistoryGridScreen">History Grid</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#">Edit</a>
+
+                <ul>
+                    <li><a @onclick="t => UtilityHelper.CopyStringValue(calculatorData.CurrentEntryText)">Copy</a></li>
+                    <li><a @onclick="t => GetClipboardEntry()" >Paste</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#">History</a>
+
+                <ul>
+                    <li><a @onclick='t => ExportXML(HistoryList,"HistoryList")'>Export History</a></li>
+                    <li><a @onclick="ViewImportXMLScreen">Import History</a></li>
+                </ul>
+            </li>
+
+        </ul>
+    </nav>
+    <div class="row" style="padding-top:30px;">
+        @if (IsCalculatorView)
+        {
+            <div style="float: left; width:60%">
+                <p class="output">@calculatorData.CurrentEntryText</p>
+                <div class="keys-area" style=" bottom: 0 !important">
+
+                    <button value="7" class="calculator-keys"
+                        @onclick="(t =>MemoryStorageHelper.ClearMemory(MemoryList))">
+                        MC
+                    </button>
+                    <button value="8" class="calculator-keys"
+                        @onclick="(t => RecallMemory(MemoryList))">
+                        MR
+                    </button>
+                    <button value="9" class="calculator-keys" @onclick="t => UpdateLastMemoryValue(1)">M+</button>
+                    <button value="9" class="calculator-keys" @onclick="t => UpdateLastMemoryValue(-1)">M-</button>
+
+                    <button value="8" class="calculator-keys"
+                        @onclick="(t => StoreMemory())">
+                        MS
+                    </button>
+                    <button value="9" class="calculator-keys" @onclick="ClearEntry">CE</button>
+                    <button value="3" class="calculator-keys" @onclick="Clear">C</button>
+                    <button value="9" class="calculator-keys" @onclick="RemoveLastKey" >&#8592;</button>
+
+                    <button value="7" class="calculator-keys" @onclick='(() => Append("7"))'>7</button>
+                    <button value="8" class="calculator-keys" @onclick='(() => Append("8"))'>8</button>
+                    <button value="9" class="calculator-keys" @onclick='(() => Append("9"))'>9</button>
+                    <div class="calculator-keys">
+                        <select class="math-operations"
+                            bind="@calculatorData.NewOperator"
+                            value="@calculatorData.NewOperator" @onchange="@((ChangeEventArgs e) => MathOperator_OnChanged(e))">
+                            @foreach (var mathOperator in Enum.GetValues(typeof(MathOperator)))
+                            {
+
+                                <option value="@mathOperator">
+                                    @{
+                                        var op = (MathOperator)Enum.Parse(typeof(MathOperator), mathOperator.ToString());
+                                    }
+                                    @op.GetDisplayName()
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <button value="4" class="calculator-keys" @onclick='(() => Append("4"))'>4</button>
+                    <button value="5" class="calculator-keys" @onclick='(() => Append("5"))'>5</button>
+                    <button value="6" class="calculator-keys" @onclick='(() => Append("6"))'>6</button>
+
+                    <button value="1" class="calculator-keys" @onclick='(() => Append("1"))'>1</button>
+                    <button value="2" class="calculator-keys" @onclick='(() => Append("2"))'>2</button>
+                    <button value="3" class="calculator-keys" @onclick='(() => Append("3"))'>3</button>
+
+                    <button class="calculator-keys" @onclick="ChangeSign">&#177;</button>
+                    <button class="calculator-keys" @onclick='(() => Append("0"))'>0</button>
+                    <button class="calculator-keys" @onclick='(() => Append("."))'>.</button>
+                    <button class="calculator-keys equal-sign" @onclick="Compute">=</button>
+                </div>
+            </div>
+            <div style="float:right; width: 40%">
+                <div class="tab">
+                    <button @onclick="(t =>SwitchTab(1))" style="@((HistoryTab) ? "font-weight: bolder" : "font-weight: normal");)">
+                        History
+                    </button>
+
+                    <button @onclick="(t =>SwitchTab(2))" style="@((MemoryTab) ? "font-weight: bolder" : "font-weight: normal");)">Memory</button>
+                </div>
+                @if (HistoryTab)
+                {
+                    <div class="tab-content" style="max-height:380px; overflow-y: auto; padding-right:10px;">
+
+                        @if (!HistoryList.Any())
+                        {
+                            <div class="tab-content-entries">
+
+                                <p>There's nothing saved in history.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="tab-menu">
+                                <button @onclick="ClearHistory">&#x1F5D1</button>
+                            </div>
+                            @foreach (var history in HistoryList.AsEnumerable().Reverse())
+                            {
+                                <div class="tab-content-entries">
+                                    <p class="details">
+                                        @history.Hist_Action @(
+                        !string.IsNullOrEmpty(history.Hist_Details) ? history.Hist_Details : string.Empty
+                        )
+                                    </p>
+                                    <p class="result">@history.Hist_Value</p>
+                                </div>
+                            }
+                        }
+
+                    </div>
+                }
+                else if (MemoryTab)
+                {
+                    <div class="tab-content" style="max-height:380px; overflow-y: auto; padding-right:10px;">
+                        @if (!MemoryList.Any())
+                        {
+                            <div class="tab-content-entries">
+
+                                <p>There's nothing saved in memory.</p>
+                            </div>
+                        }
+                        else
+                        {
+
+                            <select multiple="multiple">
+                                @foreach (var memory in MemoryList.OrderByDescending(hl => hl.Id))
+                                {
+                                    <option>
+                                        @memory.Value
+                                    </option>
+                                }
+                            </select>
+                        }
+
+                    </div>
+                }
+
+            </div>
+        }
+        else if (IsImportXMLView)
+        {
+            <div class="grid">
+                <InputFile OnChange="@ImportHistoryXML"></InputFile><br />
+
+                @if (TempHistoryList != null && TempHistoryList.Any())
+                {
+                    <button @onclick="UploadImportedXML">Upload History</button>
+                    <table>
+                        <tr>
+                            <th>Id</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Value</th>
+                        </tr>
+                        @foreach (var historyLine in TempHistoryList)
+                        {
+                            <tr>
+                                <td>@historyLine.Hist_ID</td>
+                                <td>@historyLine.Hist_Action</td>
+                                <td>@historyLine.Hist_Details</td>
+                                <td>@historyLine.Hist_Value</td>
+                            </tr>
+                        }
+                    </table>
+                }
+            </div>
+        }
+        else if (IsHistoryGridView)
+        {
+            <div class="grid">
+                @if (HistoryList != null && HistoryList.Any())
+                {
+                    <table>
+                        <tr>
+                            <th>Id</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Value</th>
+                        </tr>
+                        @foreach (var historyLine in HistoryList)
+                        {
+                            <tr>
+                                <td>@historyLine.Hist_ID</td>
+                                <td>@historyLine.Hist_Action</td>
+                                <td>@historyLine.Hist_Details</td>
+                                <td>@historyLine.Hist_Value</td>
+                            </tr>
+                        }
+                    </table>
+                }
+                else
+                {
+                    <p>No history to show here.</p>
+                }
+            </div>
+        }
+    </div>
+
+</div>

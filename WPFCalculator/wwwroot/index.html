@@ -1,0 +1,37 @@
+﻿<!--Reference: https://learn.microsoft.com/en-us/aspnet/core/blazor/hybrid/tutorials/wpf?view=aspnetcore-7.0-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deltek - Calculator Exercise</title>
+    <base href="/" />
+    <link href="css/app.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app"></div>
+    <script src="_framework/blazor.webview.js"></script>
+    <script>
+        var seq = "rainbow"
+        var input = ""
+        window.addEventListener("keypress", function (e) {
+            input += String.fromCharCode(e.keyCode)
+            alert(e.keyCode);
+            for (var i = 0; i < seq.length; i++) {
+                if (input[i] != seq[i] && input[i] != undefined) {
+                    input = ""
+                }
+            }
+
+            if (input == seq) {
+                alert("EASTER EGG!")
+
+                input = ""
+            }
+        })
+    </script>
+</body>
+
+</html>
